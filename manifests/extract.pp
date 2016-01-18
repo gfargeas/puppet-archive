@@ -52,32 +52,32 @@ define archive::extract (
   case $ensure {
     'present': {
 
-      $extract_zip    = "unzip -o ${src_target}/${name}.${extension} -d ${target}"
-      $extract_targz  = "tar --no-same-owner --no-same-permissions --strip-components=${strip_components} -xzf ${src_target}/${name}.${extension} -C ${target}"
-      $extract_tarbz2 = "tar --no-same-owner --no-same-permissions --strip-components=${strip_components} -xjf ${src_target}/${name}.${extension} -C ${target}"
-      $extract_tarxz  = "tar --no-same-owner --no-same-permissions --strip-components=${strip_components} -xpf ${src_target}/${name}.${extension} -C ${target}"
+      $extract_zip    = "unzip -o ${src_target}/${name}.${extension} -d ${extract_dir}"
+      $extract_targz  = "tar --no-same-owner --no-same-permissions --strip-components=${strip_components} -xzf ${src_target}/${name}.${extension} -C ${extract_dir}"
+      $extract_tarbz2 = "tar --no-same-owner --no-same-permissions --strip-components=${strip_components} -xjf ${src_target}/${name}.${extension} -C ${extract_dir}"
+      $extract_tarxz  = "tar --no-same-owner --no-same-permissions --strip-components=${strip_components} -xpf ${src_target}/${name}.${extension} -C ${extract_dir}"
 
       $purge_command = $purge ? {
-        true    => "rm -rf ${target} && ",
+        true    => "rm -rf ${extract_dir} && ",
         default => '',
       }
 
       $command = $extension ? {
-        'zip'     => "${purge_command}mkdir -p ${target} && ${extract_zip}",
-        'tar.gz'  => "${purge_command}mkdir -p ${target} && ${extract_targz}",
-        'tgz'     => "${purge_command}mkdir -p ${target} && ${extract_targz}",
-        'tar.bz2' => "${purge_command}mkdir -p ${target} && ${extract_tarbz2}",
-        'tgz2'    => "${purge_command}mkdir -p ${target} && ${extract_tarbz2}",
-        'tar.xz'  => "${purge_command}mkdir -p ${target} && ${extract_tarxz}",
-        'txz'     => "${purge_command}mkdir -p ${target} && ${extract_tarxz}",
+        'zip'     => "${purge_command}mkdir -p ${extract_dir} && ${extract_zip}",
+        'tar.gz'  => "${purge_command}mkdir -p ${extract_dir} && ${extract_targz}",
+        'tgz'     => "${purge_command}mkdir -p ${extract_dir} && ${extract_targz}",
+        'tar.bz2' => "${purge_command}mkdir -p ${extract_dir} && ${extract_tarbz2}",
+        'tgz2'    => "${purge_command}mkdir -p ${extract_dir} && ${extract_tarbz2}",
+        'tar.xz'  => "${purge_command}mkdir -p ${extract_dir} && ${extract_tarxz}",
+        'txz'     => "${purge_command}mkdir -p ${extract_dir} && ${extract_tarxz}",
         default   => fail ( "Unknown extension value '${extension}'" ),
       }
       exec {"${name} unpack":
         command => $command,
-        creates => $extract_dir,
         timeout => $timeout,
         user    => $user,
         path    => $path,
+        refreshonly => true
       }
     }
     'absent': {
