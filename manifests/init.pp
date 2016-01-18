@@ -50,33 +50,53 @@ define archive (
   $purge_target=false,
   $user=undef,
 ) {
-
-  archive::download {"${name}.${extension}":
-    ensure           => $ensure,
-    url              => $url,
-    checksum         => $checksum,
-    digest_url       => $digest_url,
-    digest_string    => $digest_string,
-    digest_type      => $digest_type,
-    timeout          => $timeout,
-    src_target       => $src_target,
-    allow_insecure   => $allow_insecure,
-    follow_redirects => $follow_redirects,
-    verbose          => $verbose,
-    proxy_server     => $proxy_server,
-    user             => $user,
-  }
-
-  archive::extract {$name:
-    ensure           => $ensure,
-    target           => $target,
-    purge            => $purge_target,
-    src_target       => $src_target,
-    root_dir         => $root_dir,
-    extension        => $extension,
-    timeout          => $timeout,
-    strip_components => $strip_components,
-    require          => Archive::Download["${name}.${extension}"],
-    user             => $user,
+  if $url =~ /^http.*/ {
+    archive::download {"${name}.${extension}":
+      ensure           => $ensure,
+      url              => $url,
+      checksum         => $checksum,
+      digest_url       => $digest_url,
+      digest_string    => $digest_string,
+      digest_type      => $digest_type,
+      timeout          => $timeout,
+      src_target       => $src_target,
+      allow_insecure   => $allow_insecure,
+      follow_redirects => $follow_redirects,
+      verbose          => $verbose,
+      proxy_server     => $proxy_server,
+      user             => $user,
+  } ~>
+    archive::extract {"$name":
+      ensure           => $ensure,
+      target           => $target,
+      purge            => $purge_target,
+      src_target       => $src_target,
+      root_dir         => $root_dir,
+      extension        => $extension,
+      timeout          => $timeout,
+      strip_components => $strip_components,
+      require          => Archive::Download["${name}.${extension}"],
+      user             => $user,
+    }
+  } elsif $url =~ /^puppet.*/ {
+    file {"${src_target}/${name}.${extension}" :
+        ensure => $ensure,
+        source => $url,
+        owner => $user,
+        group => $user,
+        checksum => md5,
+    } ~>
+    archive::extract {"${name}":
+        ensure           => $ensure,
+        target           => $target,
+        purge            => $purge_target,
+        src_target       => $src_target,
+        root_dir         => $root_dir,
+        extension        => $extension,
+        timeout          => $timeout,
+        strip_components => $strip_components,
+        user             => $user,
+        require          => File["${src_target}/${name}.${extension}"],
+    }
   }
 }
